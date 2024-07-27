@@ -39,6 +39,16 @@ import { ListView } from "./listView";
 import { listPropertyView } from "./listViewPropertyView";
 import { getData } from "./listViewUtils";
 import { withMethodExposing } from "comps/generators/withMethodExposing";
+import { eventHandlerControl } from "comps/controls/eventHandlerControl";
+
+//The events supported
+const eventDefinitions = [
+  {
+    label: trans("eventHandler.endOfList"),
+    value: "endOfList",
+    description: trans("eventHandler.endOfListDesc"),
+  },
+];
 
 const childrenMap = {
   noOfRows: withIsLoadingMethod(NumberOrJSONObjectArrayControl), // FIXME: migrate "noOfRows" to "data"
@@ -51,6 +61,8 @@ const childrenMap = {
   autoHeight: AutoHeightControl,
   scrollbars: withDefault(BoolControl, false),
   showBorder: BoolControl,
+  infiniteList: withDefault(BoolControl, false),
+  onEvent: eventHandlerControl(eventDefinitions),
   pagination: withDefault(PaginationControl, { pageSize: "6" }),
   style: styleControl(ListViewStyle, 'style'),
   animationStyle: styleControl(AnimationStyle, 'animationStyle'),
@@ -89,7 +101,7 @@ export class ListViewImplComp extends ListViewTmpComp implements IContainer {
     let comp = reduceInContext({ inEventContext: true }, () => super.reduce(action));
 
     if (action.type === CompActionTypes.UPDATE_NODES_V2) {
-      const { itemCount} = getData(comp.children.noOfRows.getView());
+      const { itemCount } = getData(comp.children.noOfRows.getView());
       const pagination = comp.children.pagination.getView();
       const total = pagination.total || itemCount;
       const offset = (pagination.current - 1) * pagination.pageSize;
@@ -179,12 +191,14 @@ ListViewPropertyComp = withExposingConfigs(ListViewPropertyComp, [
   }),
   new CompDepsConfig(
     "pageNo",
-    (comp) => ({index: comp.children.pagination.children.pageNo.exposingNode() }),
+    (comp) => ({ index: comp.children.pagination.children.pageNo.exposingNode() }),
     (input) => input.index,
     "Page Number", // trans("listView.itemsDesc")
   ),
   NameConfigHidden,
 ]);
+
+
 
 export const ListViewComp = withMethodExposing(ListViewPropertyComp, [
   {
@@ -198,6 +212,23 @@ export const ListViewComp = withMethodExposing(ListViewPropertyComp, [
       if (page && page > 0) {
         comp.children.pagination.children.pageNo.dispatchChangeValueAction(page);
       }
+    },
+  },
+  {
+    method: {
+      name: "addPage",
+      description: "",
+      params: [{ name: "page", type: "JSONValue" }],
+    },
+    execute: (comp, values) => {
+      /*
+      const page = values[0] as number;
+      if (page && page > 0) {
+        comp.children.pagination.children.pageNo.dispatchChangeValueAction(page);
+      }
+        */
+      console.log("AddPage", values[0], comp.children.noOfRows)
+
     },
   },
 ])

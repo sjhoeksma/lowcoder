@@ -21,15 +21,16 @@ import { getCurrentItemParams, getData } from "./listViewUtils";
 import { useMergeCompStyles } from "@lowcoder-ee/util/hooks";
 import { childrenToProps } from "@lowcoder-ee/comps/generators/multi";
 import { AnimationStyleType } from "@lowcoder-ee/comps/controls/styleControlConstants";
+import InfiniteScroll from './infiniteScroll'
 
-const ListViewWrapper = styled.div<{ $style: any; $paddingWidth: string,$animationStyle:AnimationStyleType }>`
+const ListViewWrapper = styled.div<{ $style: any; $paddingWidth: string, $animationStyle: AnimationStyleType }>`
   height: 100%;
   border: 1px solid ${(props) => props.$style.border};
   border-radius: ${(props) => props.$style.radius};
   padding: 3px ${(props) => props.$paddingWidth};
   rotate: ${(props) => props.$style.rotation};
   background-color: ${(props) => props.$style.background};
-  ${props=>props.$animationStyle}
+  ${props => props.$animationStyle}
 `;
 
 const FooterWrapper = styled.div`
@@ -52,7 +53,7 @@ const FlexWrapper = styled.div`
 
 const ListOrientationWrapper = styled.div<{
   $isHorizontal: boolean,
-  $autoHeight : boolean,
+  $autoHeight: boolean,
   $isGrid: boolean,
 }>`
   height: ${(props) => (props.$autoHeight ? "auto" : "100%")};
@@ -71,7 +72,7 @@ const MinHorizontalWidthContext = createContext<MinHorizontalWidthContextType>({
   minHorizontalWidth: '100px',
 });
 
-const ContainerInListView = (props: ContainerBaseProps ) => {
+const ContainerInListView = (props: ContainerBaseProps) => {
   const {
     horizontalWidth,
     minHorizontalWidth
@@ -129,34 +130,34 @@ function ListItem({
   // }, []);
 
   return (
-      <MinHorizontalWidthContext.Provider
-        value={{
-          horizontalWidth,
-          minHorizontalWidth
+    <MinHorizontalWidthContext.Provider
+      value={{
+        horizontalWidth,
+        minHorizontalWidth
+      }}
+    >
+      <ContainerInListView
+        layout={containerProps.layout}
+        items={gridItemCompToGridItems(containerProps.items)}
+        positionParams={containerProps.positionParams}
+        // all layout changes should only reflect on the commonContainer
+        dispatch={itemIdx === offset ? containerProps.dispatch : _.noop}
+        style={{
+          height: "100%",
+          // in case of horizontal mode, minHorizontalWidth is 0px
+          width: minHorizontalWidth || '100%',
+          backgroundColor: "transparent",
+          // flex: "auto",
         }}
-      >
-        <ContainerInListView
-          layout={containerProps.layout}
-          items={gridItemCompToGridItems(containerProps.items)}
-          positionParams={containerProps.positionParams}
-          // all layout changes should only reflect on the commonContainer
-          dispatch={itemIdx === offset ? containerProps.dispatch : _.noop}
-          style={{
-            height: "100%",
-            // in case of horizontal mode, minHorizontalWidth is 0px
-            width: minHorizontalWidth || '100%',
-            backgroundColor: "transparent",
-            // flex: "auto",
-          }}
-          autoHeight={autoHeight}
-          isDroppable={itemIdx === offset}
-          isDraggable={itemIdx === offset}
-          isResizable={itemIdx === offset}
-          isSelectable={itemIdx === offset}
-          scrollContainerRef={scrollContainerRef}
-          overflow={"hidden"}
-          minHeight={minHeight}
-          enableGridLines={true}
+        autoHeight={autoHeight}
+        isDroppable={itemIdx === offset}
+        isDraggable={itemIdx === offset}
+        isResizable={itemIdx === offset}
+        isSelectable={itemIdx === offset}
+        scrollContainerRef={scrollContainerRef}
+        overflow={"hidden"}
+        minHeight={minHeight}
+        enableGridLines={true}
       />
     </MinHorizontalWidthContext.Provider>
   );
@@ -188,6 +189,8 @@ export function ListView(props: Props) {
   const autoHeight = useMemo(() => children.autoHeight.getView(), [children.autoHeight]);
   const scrollbars = useMemo(() => children.scrollbars.getView(), [children.scrollbars]);
   const horizontal = useMemo(() => children.horizontal.getView(), [children.horizontal]);
+  const infiniteList = useMemo(() => children.infiniteList.getView(), [children.infiniteList]);
+  const onEvent = useMemo(() => children.onEvent.getView(), [children.onEvent]);
   const minHorizontalWidth = useMemo(() => children.minHorizontalWidth.getView(), [children.minHorizontalWidth]);
   const noOfColumns = useMemo(
     () => Math.max(1, children.noOfColumns.getView()),
@@ -282,7 +285,21 @@ export function ListView(props: Props) {
   useMergeCompStyles(childrenProps, comp.dispatch);
 
   // log.debug("renders: ", renders);
-  return (
+
+  return infiniteList && !autoHeight ? (
+    <BackgroundColorContext.Provider value={style.background}>
+      <ListViewWrapper $style={style} $paddingWidth={paddingWidth} $animationStyle={animationStyle}>
+        <ScrollBar style={{ height: autoHeight ? "auto" : "100%", margin: "0px", padding: "0px" }} hideScrollbar={!scrollbars}>
+
+          <InfiniteScroll
+            endOfList={() => { onEvent("endOfList") }}
+          >
+            {renders}
+          </InfiniteScroll>
+        </ScrollBar>
+      </ListViewWrapper>
+    </BackgroundColorContext.Provider >
+  ) : (
     <BackgroundColorContext.Provider value={style.background}>
       <ListViewWrapper $style={style} $paddingWidth={paddingWidth} $animationStyle={animationStyle}>
         <BodyWrapper ref={ref} $autoHeight={autoHeight}>

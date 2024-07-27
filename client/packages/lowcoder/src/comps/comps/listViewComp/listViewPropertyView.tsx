@@ -49,9 +49,16 @@ export function listPropertyView(compType: ListCompType) {
 
         {(useContext(EditorContext).editorModeStatus === "logic" || useContext(EditorContext).editorModeStatus === "both") && (
           <Section name={trans("prop.pagination")}>
-            {comp.children.pagination.getPropertyView()}
+            {(!children.autoHeight.getView()) &&
+              comp.children.infiniteList.propertyView({ label: trans("prop.infiniteList") })}
+            {(!comp.children.infiniteList.getView() || children.autoHeight.getView()) &&
+              comp.children.pagination.getPropertyView()}
           </Section>
         )}
+
+        <Section name={sectionNames.interaction}>
+          {children.onEvent.propertyView()}
+        </Section>
 
         {(useContext(EditorContext).editorModeStatus === "logic" || useContext(EditorContext).editorModeStatus === "both") && (
           <Section name={sectionNames.interaction}>
@@ -61,22 +68,22 @@ export function listPropertyView(compType: ListCompType) {
 
         {(useContext(EditorContext).editorModeStatus === "layout" || useContext(EditorContext).editorModeStatus === "both") && (
           <><Section name={sectionNames.layout}>
-              {children.autoHeight.getPropertyView()}
-              {(!children.autoHeight.getView() || children.horizontal.getView()) && 
-                children.scrollbars.propertyView({
+            {children.autoHeight.getPropertyView()}
+            {(!children.autoHeight.getView() || children.horizontal.getView()) &&
+              children.scrollbars.propertyView({
                 label: trans("prop.scrollbar"),
-               }  
+              }
               )}
-              {children.horizontal.propertyView({
-                label: trans("prop.horizontal"),
-              })}
-              {children.horizontal.getView() && (
-                children.minHorizontalWidth.propertyView({
-                  label: trans("prop.minHorizontalWidth"),
-                  placeholder: '100px',
-                })
-              )}
-            </Section>
+            {children.horizontal.propertyView({
+              label: trans("prop.horizontal"),
+            })}
+            {children.horizontal.getView() && (
+              children.minHorizontalWidth.propertyView({
+                label: trans("prop.minHorizontalWidth"),
+                placeholder: '100px',
+              })
+            )}
+          </Section>
             <Section name={sectionNames.style}>
               {children.style.getPropertyView()}
             </Section>
@@ -84,7 +91,7 @@ export function listPropertyView(compType: ListCompType) {
               {children.animationStyle.getPropertyView()}
             </Section></>
         )}
-   
+
       </>
     );
   };
